@@ -58,6 +58,7 @@ class Blocks extends React.Component {
             'handleStatusButtonUpdate',
             'handleOpenSoundRecorder',
             'handlePromptStart',
+            'handleDicePromptStart',
             'handlePromptCallback',
             'handlePromptClose',
             'handleCustomProceduresClose',
@@ -75,6 +76,7 @@ class Blocks extends React.Component {
             'setLocale'
         ]);
         this.ScratchBlocks.prompt = this.handlePromptStart;
+        this.ScratchBlocks.dicePrompt = this.handleDicePromptStart;
         this.ScratchBlocks.statusButtonCallback = this.handleConnectionModalStart;
         this.ScratchBlocks.recordSoundCallback = this.handleOpenSoundRecorder;
 
@@ -107,9 +109,8 @@ class Blocks extends React.Component {
         const procButtonCallback = () => {
             this.ScratchBlocks.Procedures.createProcedureDefCallback_(this.workspace);
         };
-        const diceButtonCallback = () => {
-            this.handleConnectionModalStart('dice');
-        };
+        const diceButtonCallback = () =>
+            (() => this.ScratchBlocks.Variables.createDice(this.workspace));
         const markovButtonCallback = () => {
             this.props.vm.runtime.showMarkovDice = true;
             this.props.vm.runtime.requestToolboxExtensionsUpdate();
@@ -118,7 +119,7 @@ class Blocks extends React.Component {
         toolboxWorkspace.registerButtonCallback('MAKE_A_VARIABLE', varListButtonCallback(''));
         toolboxWorkspace.registerButtonCallback('MAKE_A_LIST', varListButtonCallback('list'));
         toolboxWorkspace.registerButtonCallback('MAKE_A_PROCEDURE', procButtonCallback);
-        toolboxWorkspace.registerButtonCallback('MAKE_A_DICE', diceButtonCallback);
+        toolboxWorkspace.registerButtonCallback('MAKE_A_DICE', diceButtonCallback());
         toolboxWorkspace.registerButtonCallback('SHOW_MARKOV_DICE', markovButtonCallback);
 
         // Store the xml of the toolbox that is actually rendered.
@@ -474,6 +475,14 @@ class Blocks extends React.Component {
         p.prompt.showCloudOption = (optVarType === this.ScratchBlocks.SCALAR_VARIABLE_TYPE) && this.props.canUseCloud;
         this.setState(p);
     }
+
+    handleDicePromptStart (callback) {
+        this.handleConnectionModalStart('dice');
+        this.props.vm.runtime.on('NAME_DICE', diceNameAndType => {
+            callback(diceNameAndType[0], diceNameAndType[1]);
+        });
+    }
+    
     handleConnectionModalStart (extensionId) {
         this.props.onOpenConnectionModal(extensionId);
     }
